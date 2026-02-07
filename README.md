@@ -1,0 +1,2 @@
+# Leadership-Canaan-
+ذكاء اصطناعي 
