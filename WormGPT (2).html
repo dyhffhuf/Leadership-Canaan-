@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>الهكر القياده كنعان - لوحة تحكم الدردشة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* إعادة تعيين عام */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* تصميم للهواتف فقط - إخفاء على الشاشات الكبيرة */
+        @media (min-width: 768px) {
+            body::before {
+                content: "لوحة التحكم مخصصة للهواتف فقط. يرجى استخدام جهاز محمول.";
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: #0a0a0a;
+                color: #fff;
+                font-size: 18px;
+                text-align: center;
+                padding: 20px;
+                z-index: 10000;
+            }
+            
+            #app {
+                display: none;
+            }
+        }
+        
+        body {
+            background-color: #0a0a0a;
+            color: #f0f0f0;
+            line-height: 1.6;
+            overflow-x: hidden;
+            height: 100vh;
+        }
+        
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0 auto;
+            background: linear-gradient(to bottom, #0a1a2a, #0a0a1a);
+        }
+        
+        /* الهيدر - أصغر حجم */
+        header {
+            background-color: #0a1a2a;
+            padding: 10px 15px;
+            border-bottom: 2px solid #00a8ff;
+            box-shadow: 0 4px 12px rgba(0, 168, 255, 0.2);
+            position: relative;
+            z-index: 10;
+            min-height: 70px;
+            flex-shrink: 0;
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            color: #00a8ff;
+            font-size: 24px;
+            filter: drop-shadow(0 0 5px rgba(0, 168, 255, 0.5));
+        }
+        
+        .logo-text h1 {
+            font-size: 18px;
+            color: #00a8ff;
+            margin-bottom: 3px;
+        }
+        
+        .logo-text p {
+            font-size: 11px;
+            color: #99ccff;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #00ff88;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        
+        /* منطقة المحادثة - أكبر وأوسع */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px 10px;
+            background-color: #0a101a;
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(0, 168, 255, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 85% 80%, rgba(0, 255, 136, 0.05) 0%, transparent 20%);
+            min-height: 0; /* مهم للتمدد */
+        }
+        
+        /* الرسائل */
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            max-width: 90%; /* عرض أكبر للرسائل */
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-message {
+            margin-left: auto;
+            flex-direction: row-reverse;
+        }
+        
+        .bot-message {
+            margin-right: auto;
+        }
+        
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: 20px;
+            position: relative;
+            word-break: break-word;
+            line-height: 1.5;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            max-width: 100%;
+        }
+        
+        .user-message .message-bubble {
+            background: linear-gradient(135deg, #005a8b, #003d5c);
+            color: white;
+            border-bottom-left-radius: 4px;
+            border-top-right-radius: 4px;
+        }
+        
+        .bot-message .message-bubble {
+            background: linear-gradient(135deg, #1a2a3a, #0a1a2a);
+            color: #d0e6ff;
+            border: 1px solid #2a3a4a;
+            border-bottom-right-radius: 4px;
+            border-top-left-radius: 4px;
+        }
+        
+        .message-sender {
+            font-size: 11px;
+            margin-bottom: 4px;
+            color: #00a8ff;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .user-message .message-sender {
+            justify-content: flex-end;
+        }
+        
+        .message-time {
+            font-size: 9px;
+            color: #99ccff;
+            margin-top: 4px;
+            text-align: left;
+        }
+        
+        .user-message .message-time {
+            text-align: right;
+        }
+        
+        .bot-icon, .user-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 8px;
+            flex-shrink: 0;
+        }
+        
+        .bot-icon {
+            background: linear-gradient(135deg, #005a8b, #0077b3);
+            color: white;
+            font-size: 16px;
+        }
+        
+        .user-icon {
+            background: linear-gradient(135deg, #1a2a3a, #2a3a4a);
+            color: #00a8ff;
+            font-size: 16px;
+        }
+        
+        /* منطقة الإدخال - أصغر قليلاً */
+        .input-area {
+            padding: 12px 15px;
+            background-color: #0a1a2a;
+            border-top: 2px solid #0a2a3a;
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        
+        #message-input {
+            flex: 1;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 25px;
+            background-color: #1a2a3a;
+            color: #f0f0f0;
+            font-size: 15px;
+            outline: none;
+            border: 1px solid #2a3a4a;
+            transition: all 0.3s;
+        }
+        
+        #message-input:focus {
+            border-color: #00a8ff;
+            box-shadow: 0 0 0 2px rgba(0, 168, 255, 0.2);
+        }
+        
+        #message-input::placeholder {
+            color: #6699cc;
+        }
+        
+        #send-btn {
+            background: linear-gradient(135deg, #00a8ff, #0077b3);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0, 168, 255, 0.3);
+            flex-shrink: 0;
+        }
+        
+        #send-btn:hover {
+            background: linear-gradient(135deg, #00c8ff, #0099e6);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 168, 255, 0.4);
+        }
+        
+        #send-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0, 168, 255, 0.3);
+        }
+        
+        #send-btn:disabled {
+            background: linear-gradient(135deg, #1a2a3a, #0a1a2a);
+            color: #6699cc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        /* حالة التحميل */
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background-color: rgba(10, 26, 42, 0.8);
+            border-radius: 18px;
+            margin: 8px auto;
+            width: fit-content;
+        }
+        
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .loading-dots span {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: #00a8ff;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        
+        .loading-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+        
+        .loading-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+        
+        @keyframes bounce {
+            0%, 80%, 100% { 
+                transform: scale(0);
+            } 
+            40% { 
+                transform: scale(1.0);
+            }
+        }
+        
+        /* تذييل - أصغر */
+        footer {
+            padding: 8px 10px;
+            text-align: center;
+            font-size: 11px;
+            color: #6699cc;
+            background-color: #0a0a1a;
+            border-top: 1px solid #0a2a3a;
+            flex-shrink: 0;
+            min-height: 50px;
+        }
+        
+        .developed-by {
+            color: #00ff88;
+            font-weight: bold;
+            margin-top: 3px;
+            font-size: 12px;
+        }
+        
+        /* تخصيص شريط التمرير */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #0a1a2a;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #00a8ff;
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00c8ff;
+        }
+        
+        /* تأثيرات خاصة */
+        .glow-text {
+            text-shadow: 0 0 5px rgba(0, 168, 255, 0.7);
+        }
+        
+        .pulse-blue {
+            animation: pulse-blue 2s infinite;
+        }
+        
+        @keyframes pulse-blue {
+            0% { box-shadow: 0 0 0 0 rgba(0, 168, 255, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 168, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 168, 255, 0); }
+        }
+        
+        /* رسالة الترحيب */
+        .welcome-message {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(0, 168, 255, 0.1), rgba(10, 26, 42, 0.2));
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 168, 255, 0.3);
+        }
+        
+        .welcome-message h3 {
+            color: #00a8ff;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .welcome-message p {
+            color: #99ccff;
+            font-size: 13px;
+        }
+        
+        /* معاينة الوضع الليلي */
+        .night-mode-preview {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            color: #00ff88;
+            border: 1px solid #00ff88;
+            display: none;
+        }
+        
+        @media (max-width: 767px) {
+            .night-mode-preview {
+                display: block;
+            }
+        }
+        
+        /* رمز التكنولوجيا في الخلفية */
+        .tech-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.05;
+        }
+        
+        .matrix-code {
+            position: absolute;
+            color: #00ff88;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: nowrap;
+            animation: fall linear infinite;
+        }
+        
+        @keyframes fall {
+            from { transform: translateY(-100px); }
+            to { transform: translateY(100vh); }
+        }
+        
+        /* رسالة نظام */
+        .system-message {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 11px;
+            color: #00ff88;
+            padding: 8px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="night-mode-preview">لوحة تحكم نشطة</div>
+        
+        <div class="tech-background" id="tech-bg"></div>
+        
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-user-secret"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h1 class="glow-text">الهكر القياده كنعان</h1>
+                        <p>لوحة تحكم الدردشة الذكية</p>
+                    </div>
+                </div>
+                <div class="status">
+                    <div class="status-dot"></div>
+                    <span>متصل</span>
+                </div>
+            </div>
+        </header>
+        
+        <main class="chat-container" id="chat-container">
+            <!-- رسالة النظام -->
+            <div class="system-message">
+                <i class="fas fa-code"></i> نظام الذكاء الاصطناعي هذا تم تطويره وصنعه بالكامل من قبل الهكر القياده كنعان
+            </div>
+            
+            <!-- رسالة الترحيب -->
+            <div class="welcome-message">
+                <h3><i class="fas fa-terminal"></i> مرحباً في لوحة تحكم الهكر القياده كنعان</h3>
+                <p>لوحة دردشة ذكية واسعة - يمكنك الكتابة بحرية والاستفسار عن أي موضوع تقني أو أمني</p>
+            </div>
+            
+            <!-- الرسائل ستضاف هنا ديناميكياً -->
+        </main>
+        
+        <div class="input-area">
+            <input type="text" id="message-input" placeholder="اكتب رسالتك هنا (يا قلب القياده كنعان)..." autocomplete="off">
+            <button id="send-btn" class="pulse-blue">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+        
+        <footer>
+            <p>© 2026 نظام الذكاء الاصطناعي المتقدم</p>
+            <p class="developed-by">تم التطوير والبرمجة بالكامل من قبل: الهكر القياده كنعان</p>
+            <p>جميع الحقوق محفوظة - إصدار 2.0</p>
+        </footer>
+    </div>
+
+    <script>
+        // إنشاء تأثير المصفوفة في الخلفية
+        function createMatrixEffect() {
+            const bg = document.getElementById('tech-bg');
+            const chars = "01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン";
+            
+            for (let i = 0; i < 15; i++) {
+                const code = document.createElement('div');
+                code.className = 'matrix-code';
+                code.textContent = chars[Math.floor(Math.random() * chars.length)];
+                code.style.left = Math.random() * 100 + 'vw';
+                code.style.animationDuration = (Math.random() * 5 + 3) + 's';
+                code.style.animationDelay = Math.random() * 2 + 's';
+                code.style.opacity = Math.random() * 0.3 + 0.1;
+                bg.appendChild(code);
+            }
+        }
+        
+        // متغيرات التطبيق
+        const API_ENDPOINT = "https://cdazpkilmfslosjwsgcu.supabase.co/functions/v1/wormgpt-chat";
+        const YOUR_API_KEY = "wgpt_ac7489d0bf124d1e9391f983f0db7115";
+        
+        // عناصر DOM
+        const chatContainer = document.getElementById('chat-container');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-btn');
+        
+        // الحفاظ على سجل المحادثة
+        let conversationHistory = [];
+        
+        // إنشاء تأثير الخلفية
+        createMatrixEffect();
+        
+        // دالة لإضافة رسالة جديدة للشاشة
+        function addMessage(sender, text, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            // الحصول على الوقت الحالي
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            
+            // تحديد أيقونة المرسل
+            const iconClass = isUser ? 'user-icon' : 'bot-icon';
+            const iconSymbol = isUser ? '<i class="fas fa-user"></i>' : '<i class="fas fa-user-secret"></i>';
+            const senderName = isUser ? 'أنت' : 'الذكاء الاصطناعي';
+            
+            messageDiv.innerHTML = `
+                <div class="${iconClass}">${iconSymbol}</div>
+                <div style="flex: 1; max-width: calc(100% - 50px);">
+                    <div class="message-sender">${senderName}</div>
+                    <div class="message-bubble">${text}</div>
+                    <div class="message-time">${timeString}</div>
+                </div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            
+            // التمرير لأسفل لعرض أحدث رسالة
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // إضافة الرسالة إلى سجل المحادثة
+            conversationHistory.push({
+                sender: senderName,
+                text: text,
+                time: timeString,
+                isUser: isUser
+            });
+        }
+        
+        // دالة لإظهار حالة التحميل
+        function showLoading() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'loading';
+            loadingDiv.id = 'loading-indicator';
+            loadingDiv.innerHTML = `
+                <span>جاري المعالجة</span>
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            
+            chatContainer.appendChild(loadingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        // دالة لإخفاء حالة التحميل
+        function hideLoading() {
+            const loadingIndicator = document.getElementById('loading-indicator');
+            if (loadingIndicator) {
+                loadingIndicator.remove();
+            }
+        }
+        
+        // دالة لإرسال رسالة إلى API
+        async function sendMessageToAPI(message) {
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': YOUR_API_KEY
+                    },
+                    body: JSON.stringify({
+                        message: message
+                    }),
+                    timeout: 30000
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`خطأ في الخادم: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data;
+                
+            } catch (error) {
+                console.error('خطأ في الاتصال:', error);
+                return { 
+                    error: `تعذر الاتصال بالخادم. حاول مرة أخرى لاحقًا. (${error.message})`
+                };
+            }
+        }
+        
+        // دالة لمعالجة إرسال الرسالة
+        async function handleSendMessage() {
+            const message = messageInput.value.trim();
+            
+            // التحقق من أن الرسالة ليست فارغة
+            if (!message) return;
+            
+            // التحقق من كلمات الخروج
+            if (message.toLowerCase() === 'exit' || 
+                message.toLowerCase() === 'quit' || 
+                message === 'خروج') {
+                addMessage('user', 'وداعاً!', true);
+                messageInput.value = '';
+                sendButton.disabled = true;
+                setTimeout(() => {
+                    alert('تم إنهاء الجلسة. يمكنك تحديث الصفحة لبدء محادثة جديدة.');
+                }, 500);
+                return;
+            }
+            
+            // إضافة رسالة المستخدم للشاشة
+            addMessage('user', message, true);
+            messageInput.value = '';
+            
+            // إظهار حالة التحميل
+            showLoading();
+            
+            // تعطيل زر الإرسال أثناء المعالجة
+            sendButton.disabled = true;
+            
+            try {
+                // إرسال الرسالة إلى API
+                const result = await sendMessageToAPI(message);
+                
+                // إخفاء حالة التحميل
+                hideLoading();
+                
+                // تمكين زر الإرسال مرة أخرى
+                sendButton.disabled = false;
+                
+                // عرض الرد
+                if (result.response) {
+                    addMessage('bot', result.response, false);
+                } else if (result.error) {
+                    addMessage('bot', `⚠️ خطأ: ${result.error}`, false);
+                } else {
+                    // محاولة قراءة الحقول المختلفة
+                    if (result.message) {
+                        addMessage('bot', result.message, false);
+                    } else if (result.text) {
+                        addMessage('bot', result.text, false);
+                    } else if (typeof result === 'string') {
+                        addMessage('bot', result, false);
+                    } else {
+                        addMessage('bot', JSON.stringify(result), false);
+                    }
+                }
+                
+            } catch (error) {
+                // إخفاء حالة التحميل
+                hideLoading();
+                
+                // تمكين زر الإرسال مرة أخرى
+                sendButton.disabled = false;
+                
+                // عرض رسالة الخطأ
+                addMessage('bot', `🚨 خطأ في النظام: ${error.message}`, false);
+            }
+            
+            // التركيز على حقل الإدخال بعد الرد
+            messageInput.focus();
+        }
+        
+        // إضافة مستمعي الأحداث
+        sendButton.addEventListener('click', handleSendMessage);
+        
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !sendButton.disabled) {
+                handleSendMessage();
+            }
+        });
+        
+        // تمكين زر الإرسال عند وجود نص في حقل الإدخال
+        messageInput.addEventListener('input', () => {
+            sendButton.disabled = !messageInput.value.trim();
+        });
+        
+        // إضافة رسالة ترحيب أولية من الروبوت
+        setTimeout(() => {
+            addMessage('bot', '🚀 **مرحباً بك في لوحة تحكم الهكر القياده كنعان**\n\nأنا نظام ذكاء اصطناعي متقدم تم تطويره بالكامل من قبل الهكر القياده كنعان.\n\n💡 **مميزات النظام:**\n- لوحة دردشة واسعة ومرنة\n- معالجة ذكية للنصوص\n- إجابات دقيقة ومتطورة\n- تصميم تقني حديث\n\nكيف يمكنني مساعدتك اليوم؟', false);
+        }, 800);
+        
+        // رسالة تعليمية عند التركيز على حقل الإدخال أول مرة
+        messageInput.addEventListener('focus', function() {
+            if (!this.hasAttribute('data-focused')) {
+                this.setAttribute('data-focused', 'true');
+                setTimeout(() => {
+                    addMessage('bot', '💬 **مساحة الكتابة واسعة**\nيمكنك كتابة رسائل طويلة، أسئلة معقدة، أو أي استفسار تقني. النظام مصمم لاستيعاب محادثات طويلة ومفصلة.', false);
+                }, 1000);
+            }
+        });
+        
+        // تهيئة زر الإرسال كمعطل في البداية
+        sendButton.disabled = true;
+        
+        // إضافة تأثير نقر عند الضغط على زر الإرسال
+        sendButton.addEventListener('mousedown', () => {
+            sendButton.style.transform = 'scale(0.95)';
+        });
+        
+        sendButton.addEventListener('mouseup', () => {
+            sendButton.style.transform = 'scale(1)';
+        });
+        
+        sendButton.addEventListener('mouseleave', () => {
+            sendButton.style.transform = 'scale(1)';
+        });
+        
+        // إضافة ميزة لمس للهواتف
+        document.addEventListener('touchstart', function() {}, {passive: true});
+        
+        // تحسين الأداء على الهواتف
+        if ('scrollBehavior' in document.documentElement.style) {
+            chatContainer.style.scrollBehavior = 'smooth';
+        }
+        
+        // إضافة رسالة عن المطور بعد فترة
+        setTimeout(() => {
+            addMessage('bot', '🔧 **معلومات عن المطور:**\nهذا النظام تم تطويره بالكامل من قبل **الهكر القياده كنعان**، وهو خبير في مجال:\n- الأمن السيبراني\n- برمجة الذكاء الاصطناعي\n- تطوير الأنظمة المتقدمة\n- حماية الشبكات والبيانات', false);
+        }, 3000);
+        
+        // ضبط حجم لوحة الدردشة ديناميكياً
+        function adjustChatHeight() {
+            const headerHeight = document.querySelector('header').offsetHeight;
+            const inputHeight = document.querySelector('.input-area').offsetHeight;
+            const footerHeight = document.querySelector('footer').offsetHeight;
+            const windowHeight = window.innerHeight;
+            
+            const chatHeight = windowHeight - headerHeight - inputHeight - footerHeight;
+            chatContainer.style.height = chatHeight + 'px';
+            chatContainer.style.maxHeight = chatHeight + 'px';
+        }
+        
+        // استدعاء الدالة عند تحميل الصفحة وعند تغيير الحجم
+        window.addEventListener('load', adjustChatHeight);
+        window.addEventListener('resize', adjustChatHeight);
+        
+        // ضبط أولي
+        setTimeout(adjustChatHeight, 100);
+    </script>
+</body>
+</html>
